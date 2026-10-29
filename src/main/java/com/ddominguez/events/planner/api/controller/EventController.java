@@ -3,6 +3,8 @@ package com.ddominguez.events.planner.api.controller;
 import com.ddominguez.events.planner.api.domain.Event;
 import com.ddominguez.events.planner.api.dto.EventRequestDto;
 import com.ddominguez.events.planner.api.dto.EventResponseDto;
+import com.ddominguez.events.planner.api.dto.EventUpdateRequestDto;
+import com.ddominguez.events.planner.api.exception.NoFieldsToUpdateException;
 import com.ddominguez.events.planner.api.mapper.EventMapper;
 import com.ddominguez.events.planner.api.service.IEventService;
 import jakarta.validation.Valid;
@@ -51,9 +53,13 @@ public class EventController {
 
   @PutMapping("/{id}")
   public ResponseEntity<EventResponseDto> update(
-      @PathVariable Long id, @Valid @RequestBody EventRequestDto eventRequestDto) {
+      @PathVariable Long id, @Valid @RequestBody EventUpdateRequestDto eventUpdateRequestDto) {
+    if (eventUpdateRequestDto.hasNoFields()) {
+      throw new NoFieldsToUpdateException("At least one field must be provided");
+    }
+
     Event eventToUpdate = eventService.findById(id);
-    eventMapper.updateEventFromDto(eventRequestDto, eventToUpdate);
+    eventMapper.updateEventFromDto(eventUpdateRequestDto, eventToUpdate);
     Event updatedEvent = eventService.save(eventToUpdate);
     return new ResponseEntity<>(eventMapper.toResponseDto(updatedEvent), HttpStatus.OK);
   }

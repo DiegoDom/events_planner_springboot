@@ -6,20 +6,18 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 @Data
 public class EventRequestDto {
   @NotBlank(message = "The event name cannot be empty.")
-  @Size(max = 255, message = "The event name cannot be mora than 255 characters")
+  @Size(max = 255, message = "The event name cannot be more than 255 characters")
   private String name;
 
   @NotNull(message = "The event date cannot be null")
-  @FutureOrPresent(message = "The event data cannot be in the past")
-  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+  @FutureOrPresent(message = "The event date cannot be in the past")
   private LocalDate date;
 
   @NotBlank(message = "The event location cannot be empty.")
-  @Size(max = 255, message = "The event location cannot be mora than 255 characters")
+  @Size(max = 255, message = "The event location cannot be more than 255 characters")
   private String location;
 }

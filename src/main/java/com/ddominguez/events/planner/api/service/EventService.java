@@ -23,7 +23,7 @@ public class EventService implements IEventService {
     return eventRepository
         .findById(id)
         .orElseThrow(
-            () -> new ResourceNotFoundException("Event with the id: " + id + " does not exits"));
+            () -> new ResourceNotFoundException("Event with the id: " + id + " does not exist"));
   }
 
   @Override
