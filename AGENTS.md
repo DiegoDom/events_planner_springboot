@@ -2,7 +2,7 @@
 
 ## Project
 
-Single-module Spring Boot 4.1.2 / Java 21 Maven app (`artifactId: api`). Root package is `com.ddominguez.events.planner.api`. It is an early-stage events REST API exposed under `/api/v1/events`: `GET /api/v1/events` (list) and `POST /api/v1/events` (create). Layers present: `domain` (`Event`), `repository` (`EventRepository`), `service` (`IEventService`/`EventService`), `controller` (`EventController`), `dto` (`EventRequestDto`/`EventResponseDto`) and `mapper` (`EventMapper`, MapStruct). There are no migrations, validation, or exception handlers yet.
+Single-module Spring Boot 4.1.2 / Java 21 Maven app (`artifactId: api`). Root package is `com.ddominguez.events.planner.api`. It is an early-stage events REST API exposed under `/api/v1/events`: `GET /api/v1/events` (list), `GET /api/v1/events/{id}`, `POST /api/v1/events` (create), `PUT /api/v1/events/{id}` (partial update) and `DELETE /api/v1/events/{id}`. Layers present: `domain` (`Event`), `repository` (`EventRepository`), `service` (`IEventService`/`EventService`), `controller` (`EventController`), `dto` (`EventRequestDto`/`EventUpdateRequestDto`/`EventResponseDto`), `mapper` (`EventMapper`, MapStruct) and `exception` (`GlobalExceptionHandler`, `ResourceNotFoundException`, `NoFieldsToUpdateException`). There are no migrations yet.
 
 ## Commands
 
@@ -40,10 +40,14 @@ This project uses Boot 4's split starter names. Do not "fix" them to Boot 3 name
 
 Lombok and MapStruct annotation processing are explicitly configured in `maven-compiler-plugin` for both main and test compilation (with `lombok-mapstruct-binding` so Lombok getters/setters are visible to MapStruct); keep that configuration if the compiler plugin changes. `mapstruct` is a compile dependency and `mapstruct-processor` is an annotation processor path.
 
+Boot 4 uses Jackson 3 (`tools.jackson.*`). Exception handlers and custom deserializers must import `tools.jackson.databind.*` / `tools.jackson.core.*`, not `com.fasterxml.jackson.databind.*`; the Jackson 2 exception classes are not on the classpath.
+
 ## Conventions
 
-- Package by layer under `com.ddominguez.events.planner.api`: `domain`, `repository`, `service`, `controller`, `dto`, `mapper`.
+- Package by layer under `com.ddominguez.events.planner.api`: `domain`, `repository`, `service`, `controller`, `dto`, `mapper`, `exception`.
 - `Event` uses Lombok `@Data`, is mapped to table `events`, and its date field is named `date` (not `data`); the generated column is `date`.
 - The controller maps DTOs with the MapStruct `EventMapper` (`componentModel = "spring"`); entity fields and DTO fields share names so MapStruct maps them automatically — keep names in sync when renaming a field, and do a clean build (`./mvnw clean`) after renaming so `EventMapperImpl` is regenerated.
-- Dates are `LocalDate`, so JSON uses ISO-8601 (`"2026-10-31"`). Formats like `31/10/2026` fail to deserialize; there is no custom date format configured.
-- Tests use JUnit 5 and Spring Boot test slices/starters from the Boot 4 packages above.
+- `PUT /api/v1/events/{id}` is a partial update: `EventUpdateRequestDto` omits `@NotNull`/`@NotBlank` so omitted fields are `null`, and `EventMapper.updateEventFromDto` uses `NullValuePropertyMappingStrategy.IGNORE` so those fields keep their current value. A body with no fields returns 400 (`NoFieldsToUpdateException`).
+- Validation and deserialization errors return `{status, error, message, errors}` with 400; `ResourceNotFoundException` returns 404 in the same shape. `GlobalExceptionHandler` also handles `HttpMessageNotReadableException`, so malformed payloads (including non-ISO dates) get a field-level message instead of Spring's default error body.
+- Dates are `LocalDate`, so JSON uses ISO-8601 (`"2026-10-31"`). Formats like `31/10/2026` are rejected with a structured 400 in `errors.date`; there is no custom date format configured.
+- Tests use JUnit 5 with `@SpringBootTest` + `@AutoConfigureMockMvc` (`org.springframework.boot.webmvc.test.autoconfigure`) and the H2 database; `EventControllerTest` covers validation, partial updates, 404 and invalid path variables.
