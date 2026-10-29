@@ -2,7 +2,7 @@
 
 ## Project
 
-Single-module Spring Boot 4.1.2 / Java 21 Maven app (`artifactId: api`). Root package is `com.ddominguez.events.planner.api`. It is an early-stage events REST API: only `ApiApplication`, the `Event` entity, and `EventRepository` exist — there are no controllers, services, DTOs, migrations, or exception handlers yet.
+Single-module Spring Boot 4.1.2 / Java 21 Maven app (`artifactId: api`). Root package is `com.ddominguez.events.planner.api`. It is an early-stage events REST API exposed under `/api/v1/events`: `GET /api/v1/events` (list) and `POST /api/v1/events` (create). Layers present: `domain` (`Event`), `repository` (`EventRepository`), `service` (`IEventService`/`EventService`), `controller` (`EventController`), `dto` (`EventRequestDto`/`EventResponseDto`) and `mapper` (`EventMapper`, MapStruct). There are no migrations, validation, or exception handlers yet.
 
 ## Commands
 
@@ -38,10 +38,12 @@ This project uses Boot 4's split starter names. Do not "fix" them to Boot 3 name
 - `spring-boot-starter-webmvc` (not `spring-boot-starter-web`)
 - `spring-boot-starter-webmvc-test` and `spring-boot-starter-data-jpa-test` (not `spring-boot-starter-test`)
 
-Lombok annotation processing is explicitly configured in `maven-compiler-plugin` for both main and test compilation; keep that configuration if the compiler plugin changes.
+Lombok and MapStruct annotation processing are explicitly configured in `maven-compiler-plugin` for both main and test compilation (with `lombok-mapstruct-binding` so Lombok getters/setters are visible to MapStruct); keep that configuration if the compiler plugin changes. `mapstruct` is a compile dependency and `mapstruct-processor` is an annotation processor path.
 
 ## Conventions
 
-- Package by layer under `com.ddominguez.events.planner.api` (e.g. `domain`, `repository`; add `service`/`controller`/`dto` as needed).
-- `Event` uses Lombok `@Data`, is mapped to table `events`, and its date field is named `data` (not `date`); the generated column is `data`.
+- Package by layer under `com.ddominguez.events.planner.api`: `domain`, `repository`, `service`, `controller`, `dto`, `mapper`.
+- `Event` uses Lombok `@Data`, is mapped to table `events`, and its date field is named `date` (not `data`); the generated column is `date`.
+- The controller maps DTOs with the MapStruct `EventMapper` (`componentModel = "spring"`); entity fields and DTO fields share names so MapStruct maps them automatically — keep names in sync when renaming a field, and do a clean build (`./mvnw clean`) after renaming so `EventMapperImpl` is regenerated.
+- Dates are `LocalDate`, so JSON uses ISO-8601 (`"2026-10-31"`). Formats like `31/10/2026` fail to deserialize; there is no custom date format configured.
 - Tests use JUnit 5 and Spring Boot test slices/starters from the Boot 4 packages above.
