@@ -1,6 +1,7 @@
 package com.ddominguez.events.planner.api.controller;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -37,7 +38,11 @@ class EventControllerTest {
         """;
 
     mockMvc
-        .perform(post(EVENTS_URL).contentType(MediaType.APPLICATION_JSON).content(body))
+        .perform(
+            post(EVENTS_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .with(user("admin")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.status").value(400))
         .andExpect(jsonPath("$.errors.date").value(containsString("ISO-8601")));
@@ -51,7 +56,11 @@ class EventControllerTest {
         """;
 
     mockMvc
-        .perform(post(EVENTS_URL).contentType(MediaType.APPLICATION_JSON).content(body))
+        .perform(
+            post(EVENTS_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .with(user("admin")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors.date").value("The event date cannot be in the past"));
   }
@@ -69,7 +78,8 @@ class EventControllerTest {
         .perform(
             put(EVENTS_URL + "/" + saved.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .with(user("admin")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(saved.getId().intValue()))
         .andExpect(jsonPath("$.name").value("Updated name"))
@@ -90,7 +100,8 @@ class EventControllerTest {
         .perform(
             put(EVENTS_URL + "/" + saved.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .with(user("admin")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors.date").value(containsString("ISO-8601")));
   }
@@ -103,7 +114,8 @@ class EventControllerTest {
         .perform(
             put(EVENTS_URL + "/" + saved.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+                .content("{}")
+                .with(user("admin")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("At least one field must be provided"));
   }
@@ -116,7 +128,11 @@ class EventControllerTest {
         """;
 
     mockMvc
-        .perform(put(EVENTS_URL + "/999999").contentType(MediaType.APPLICATION_JSON).content(body))
+        .perform(
+            put(EVENTS_URL + "/999999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .with(user("admin")))
         .andExpect(status().isNotFound());
   }
 
